@@ -1,72 +1,15 @@
 package main
 
 import (
-    "github.com/gocolly/colly"
     "fmt"
     "log"
-    "regexp"
-    "strings"
     "os"
     "bufio"
     "net/http"
+    //"regexp"
+    //"strings"
+    //"github.com/gocolly/colly"
 )
-
-func ScanForKeywords(needle []string, haystack string) bool {
-    for _,n := range needle {
-        if strings.Contains(strings.ToLower(haystack), strings.ToLower(n)) {
-            return true
-        }
-    }
-    return false
-}
-
-func crawlUrl(url string) {
-    included,e := regexp.Compile("^" + url + "[[:alpha:]-]*$")
-    if e != nil {
-        fmt.Println("that's it")
-        log.Fatalf("regex compile failed")
-    } else {
-        fmt.Printf("regex compiled: %v\n", included)
-    }
-
-    c := colly.NewCollector(
-        colly.URLFilters(included),
-        colly.MaxDepth(2),
-    //    colly.DisallowedURLFilters(excluded),
-    )
-
-    //c.OnRequest(func(r *colly.Request) {
-    //    fmt.Println("Visiting", r.URL)
-    //})
-
-    c.OnError(func(_ *colly.Response, err error) {
-        log.Println("Something went wrong:", err)
-    })
-
-    c.OnResponse(func(r *colly.Response) {
-        fmt.Println("Visited", r.Request.URL)
-    })
-
-    //
-    c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-        e.Request.Visit(e.Attr("href"))
-    })
-
-    c.OnXML("//h1", func(e *colly.XMLElement) {
-        fmt.Println("scanning: " + e.Text)
-        needles := []string{"linux"}
-        if ScanForKeywords(needles, e.Text) {
-            fmt.Println("--- Found match: " + e.Text)
-        }
-    })
-
-    //c.OnScraped(func(r *colly.Response) {
-    //    fmt.Println("Finished", r.Request.URL)
-    //})
-
-    fmt.Println("Starting with " + url)
-    c.Visit(url)
-}
 
 type Blog struct {
     baseUrl string
@@ -89,10 +32,8 @@ func checkForRSS(blog *Blog) error {
         } else if resp.StatusCode == 200 {
             blog.extension = extension
             blog.found = true
-    //        fmt.Println("Okay!")
+//            fmt.Printf("Got a hit at %s\n", testUrl)
             return nil
-     //   } else {
-      //      fmt.Printf("%+v\n", resp.Status)
         }
     }
     return nil
@@ -121,10 +62,9 @@ func readBlogs(filename string) []*Blog {
 
 func main() {
         // TODO: things will break if there's no trailing slash
-    //    crawlUrl("https://www.malwarebytes.com/blog/")
     blogs := readBlogs("blogs.txt")
     for _,b := range(blogs) {
-//        fmt.Println("TODO: Checking for RSS on", b.baseUrl)
+        //fmt.Println("Checking for RSS on", b.baseUrl)
         checkForRSS(b)
         if b.found == true {
             fmt.Println(b.baseUrl + b.extension)
